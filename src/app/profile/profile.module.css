@@ -14,7 +14,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column;
+    flex-direction: row;
     max-height: 500px;
     align-items: center;
     border-color: #450655;
