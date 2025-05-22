@@ -15,7 +15,7 @@ export default function Heroes() {
         heroes: [],
         loading: true,
         current: 1,
-        pageSize: 0,
+        pageSize: 5,
     });
 
     const [modalInfo, setModalInfo] = useState({
@@ -25,38 +25,21 @@ export default function Heroes() {
         loading: false,
     });
 
-    const heroCacheRef = useRef([]);
-    const publisherCacheRef = useRef(new Map());
-
     useEffect(() => {
         const fetchHeroes = async () => {
-            setData((d) => ({ ...d, loading:true}));
-
-            if (heroCacheRef.current.length > 0) {
-                setData((d) => ({
-                    ...d,
-                    heroes: heroCacheRef.current,
-                    loading: false,
-                }));
-                return;
-            }
-
             try {
-                const { data: heroes } = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/heroes`, 
-                    {
-                        "x-api-key": process.env.NEXT_PUBLIC_API_KEY,
-                    }
+                const { data: heroes } = await axios.get(
+                    `${process.env.NEXT_PUBLIC_API_URL}/heroes`,
+                    { headers: HEADERS }
                 );
-                alunoCacheRef.current = heroes;
-                setData((d) => ({
-                    ...d,
+                setData((prev) => ({
+                    ...prev,
                     heroes,
-                    loading: false,
+                    loading: false
                 }));
             } catch (error) {
-                console.error("Erro ao buscar os heróis:", error);
                 toast.error("Erro ao carregar os heróis");
-                setData((d) => ({ ...d, loading: false }));
+                setData((prev) => ({ ...prev, loading: false }));
             }
         };
 
@@ -66,26 +49,11 @@ export default function Heroes() {
     const openModal = async (hero) => {
         const cacheKey = hero.id;
         setModalInfo({ visible: true, hero, loading: true });
+        console.log(hero.photo);
+        };
 
-        if (publisherCacheRef.current.has(cacheKey)) {
-            const publisher = publisherCacheRef.current.get(cacheKey);
-            setModalInfo((prev) => ({ ...prev, publisher, loading: false }));
-            return;
-        }
-
-        try {
-            const { data: publisher } = await axios.get(
-                `${process.env.NEXT_PUBLIC_API_URL}/publishers/${hero.publisher}`,
-                {
-                    headers: HEADERS,
-                }
-            );
-            publisherCacheRef.current.set(cacheKey, publisher);
-            setModalInfo((prev) => ({ ...prev, publisher, loading: false }));
-        } catch (error) {
-            console.error("Erro ao buscar a editora:", error);
-            toast.error("Erro ao carregar a editora");
-            setModalInfo((prev) => ({ ...prev, loading: false }));
+        const closeModal = () => {
+            setModalInfo({ visible: false, hero: null, publisher: null, loading: false });
         };
 
         const paginationHeroes = () => {
@@ -122,7 +90,7 @@ export default function Heroes() {
                             cover={
                                 <Image 
                                 alt={hero.name}
-                                src={hero.photo ? hero.photo : "/images/220x220.svg"}
+                               src={hero.photo ?.startsWith("http") || hero.photo?.startsWith("/images") ? hero.photo : "/images/220.svg"}
                                 width={220}
                                 height={220}
                                 />
@@ -136,28 +104,12 @@ export default function Heroes() {
 
                     </div>
                 )}
-            </div>
-        )}
 
-        <Modal
-            title={`Editora de ${modalInfo.hero.name}`}
+                <Modal
+            title={`Editora de ${modalInfo?.hero?.name || "Desconhecido"}`}
             open={modalInfo.visible}
-            onCancel={() => 
-                setModalInfo({
-                    visible: false,
-                    hero: null,
-                    publisher: null,
-                    loading: false,
-                })
-            }
-            onOk={() => 
-                setModalInfo({
-                    visible: false,
-                    hero: null,
-                    publisher: null,
-                    loading: false,
-                })
-            }
+            onCancel={closeModal}
+            onOk={closeModal}
             width={600}
             >
                 {modalInfo.loading ? (
@@ -172,5 +124,7 @@ export default function Heroes() {
                 ) : (
                 <p style={{ textAlign: "center"}}>Editora não foi encontrada!</p>
                 )}
-        </Modal>
+            </Modal>
+            </div>
+        );
 }
