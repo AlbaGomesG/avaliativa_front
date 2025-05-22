@@ -49,7 +49,25 @@ export default function Heroes() {
     const openModal = async (hero) => {
         const cacheKey = hero.id;
         setModalInfo({ visible: true, hero, loading: true });
-        console.log(hero.photo);
+
+        try{
+            const { data: publisher } = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/publishers/${hero.publisher_id}`,
+                { headers: HEADERS }
+            );
+
+            setModalInfo((prev) => ({
+                ...prev,
+                publisher,
+                loading: false,
+            }));
+        } catch (error) {
+            toast.error("Erro ao carregar a editora");
+            setModalInfo((prev) => ({
+                ...prev,
+                loading: false,
+            }));
+        }
         };
 
         const closeModal = () => {
@@ -62,8 +80,8 @@ export default function Heroes() {
         };
 
         return (
-            <div>
-                <h1>Lista de Heróis</h1>
+            <div className={styles.container}>
+                <h1 className={styles.title}>Lista de Heróis</h1>
 
                 <Pagination 
                 current={data.current}
@@ -72,7 +90,7 @@ export default function Heroes() {
                 onChange={(page, pageSize) => setData((d) => ({ ...d, current: page, pageSize }))
                 }
                 showSizeChanger
-                pageSizeOptions={["5", "10", "20"]}
+                pageSizeOptions={["5", "10", "50"]}
                 />
 
                 {data.loading ? (
